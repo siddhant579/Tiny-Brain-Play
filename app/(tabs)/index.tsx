@@ -13,22 +13,22 @@
  *  Download karo aur /assets/sounds/ mein rakho:
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  *
- *  correct.mp3   → https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3
- *  wrong.mp3     → https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3
- *  levelup.mp3   → https://assets.mixkit.co/active_storage/sfx/1997/1997-preview.mp3
- *  pop.mp3       → https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3
- *  flip.mp3      → https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3
- *  click.mp3     → https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3
- *  daily.mp3     → https://assets.mixkit.co/active_storage/sfx/1989/1989-preview.mp3
+ *  correct.mp3   → https://assets.mixkit.co/active_studio/sfx/2018/2018-preview.mp3
+ *  wrong.mp3     → https://assets.mixkit.co/active_studio/sfx/2955/2955-preview.mp3
+ *  levelup.mp3   → https://assets.mixkit.co/active_studio/sfx/1997/1997-preview.mp3
+ *  pop.mp3       → https://assets.mixkit.co/active_studio/sfx/2003/2003-preview.mp3
+ *  flip.mp3      → https://assets.mixkit.co/active_studio/sfx/2571/2571-preview.mp3
+ *  click.mp3     → https://assets.mixkit.co/active_studio/sfx/2568/2568-preview.mp3
+ *  daily.mp3     → https://assets.mixkit.co/active_studio/sfx/1989/1989-preview.mp3
  *
  *  mkdir -p assets/sounds
- *  curl -L "https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3" -o assets/sounds/correct.mp3
- *  curl -L "https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3" -o assets/sounds/wrong.mp3
- *  curl -L "https://assets.mixkit.co/active_storage/sfx/1997/1997-preview.mp3" -o assets/sounds/levelup.mp3
- *  curl -L "https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3" -o assets/sounds/pop.mp3
- *  curl -L "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" -o assets/sounds/flip.mp3
- *  curl -L "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" -o assets/sounds/click.mp3
- *  curl -L "https://assets.mixkit.co/active_storage/sfx/1989/1989-preview.mp3" -o assets/sounds/daily.mp3
+ *  curl -L "https://assets.mixkit.co/active_studio/sfx/2018/2018-preview.mp3" -o assets/sounds/correct.mp3
+ *  curl -L "https://assets.mixkit.co/active_studio/sfx/2955/2955-preview.mp3" -o assets/sounds/wrong.mp3
+ *  curl -L "https://assets.mixkit.co/active_studio/sfx/1997/1997-preview.mp3" -o assets/sounds/levelup.mp3
+ *  curl -L "https://assets.mixkit.co/active_studio/sfx/2003/2003-preview.mp3" -o assets/sounds/pop.mp3
+ *  curl -L "https://assets.mixkit.co/active_studio/sfx/2571/2571-preview.mp3" -o assets/sounds/flip.mp3
+ *  curl -L "https://assets.mixkit.co/active_studio/sfx/2568/2568-preview.mp3" -o assets/sounds/click.mp3
+ *  curl -L "https://assets.mixkit.co/active_studio/sfx/1989/1989-preview.mp3" -o assets/sounds/daily.mp3
  */
 
 import React, {
@@ -37,7 +37,7 @@ import React, {
 import {
   View, Text, TouchableOpacity, ScrollView, StyleSheet,
   Animated, Dimensions, StatusBar, SafeAreaView, Modal,
-  Platform,
+  Platform, Alert,
 } from "react-native";
 import { Audio } from "expo-av";
 
@@ -154,6 +154,7 @@ const T = {
   text:    "#1A1A2E",
   muted:   "#6B7280",
   dark:    "#111827",
+  exit:    "#EF4444", // Red for exit button
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -246,6 +247,34 @@ function PressBtn({ onPress, style, children, disabled = false }: {
   );
 }
 
+// ══════════════════════════════════════════════════════════════
+//  EXIT BUTTON COMPONENT
+// ══════════════════════════════════════════════════════════════
+function ExitButton({ onExit, color = T.exit }: { onExit: () => void; color?: string }) {
+  const sc = useRef(new Animated.Value(1)).current;
+  
+  const handleExit = () => {
+    playSound("click");
+    // Direct home call with slight delay for sound
+    setTimeout(() => {
+      onExit();  // 👈 YEH HOME SCREEN PAR LE JAYEGA
+    }, 100);
+  };
+
+  return (
+    <TouchableOpacity
+      activeOpacity={1}
+      onPressIn={() => Animated.spring(sc, { toValue: 0.85, useNativeDriver: true, speed: 40 }).start()}
+      onPressOut={() => Animated.spring(sc, { toValue: 1, useNativeDriver: true, speed: 30 }).start()}
+      onPress={handleExit}  // 👈 YEH PRESS PAR handleExit CALL HOGA
+      style={styles.exitButtonContainer}
+    >
+      <Animated.View style={[styles.exitButton, { backgroundColor: color, transform: [{ scale: sc }] }]}>
+        <Text style={styles.exitButtonText}>✕</Text>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
 // ══════════════════════════════════════════════════════════════
 //  CONFETTI
 // ══════════════════════════════════════════════════════════════
@@ -424,11 +453,11 @@ function RewardResultScreen({ score, total, coinsEarned, xpEarned, color, newBad
 
         {/* ── BUTTONS ── */}
         <View style={rr.btnGroup}>
-          <PressBtn onPress={onRestart} style={[s.bigBtn, { backgroundColor: color }]}>
-            <Text style={s.bigBtnTxt}>Play Again 🔄</Text>
+          <PressBtn onPress={onRestart} style={[styles.bigBtn, { backgroundColor: color }]}>
+            <Text style={styles.bigBtnTxt}>Play Again 🔄</Text>
           </PressBtn>
-          <PressBtn onPress={onHome} style={[s.bigBtn, { backgroundColor: T.muted }]}>
-            <Text style={s.bigBtnTxt}>Home 🏠</Text>
+          <PressBtn onPress={onHome} style={[styles.bigBtn, { backgroundColor: T.muted }]}>
+            <Text style={styles.bigBtnTxt}>Home 🏠</Text>
           </PressBtn>
         </View>
 
@@ -703,8 +732,8 @@ function LevelUpScreen({ nextLevel, color, onContinue }: {
           Get ready for Level {nextLevel}!
         </Text>
         <PressBtn onPress={onContinue}
-          style={[s.bigBtn, { backgroundColor: color, marginTop: 36, paddingHorizontal: 48, width: "80%" }]}>
-          <Text style={s.bigBtnTxt}>Let's Go! 🚀</Text>
+          style={[styles.bigBtn, { backgroundColor: color, marginTop: 36, paddingHorizontal: 48, width: "80%" }]}>
+          <Text style={styles.bigBtnTxt}>Let's Go! 🚀</Text>
         </PressBtn>
       </Animated.View>
     </View>
@@ -712,45 +741,47 @@ function LevelUpScreen({ nextLevel, color, onContinue }: {
 }
 
 // ══════════════════════════════════════════════════════════════
-//  GAME HEADER
+//  GAME HEADER WITH EXIT BUTTON - UPDATED (Text Neeche aayega)
 // ══════════════════════════════════════════════════════════════
-function GameHeader({ score, total, qInLevel, level, maxLevel, color, onBack }: {
+function GameHeader({ score, total, qInLevel, level, maxLevel, color, onBack, onExit }: {
   score: number; total: number; qInLevel: number; level: number;
-  maxLevel: number; color: string; onBack: () => void;
+  maxLevel: number; color: string; onBack: () => void; onExit?: () => void;
 }) {
   const barW = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(barW, { toValue: qInLevel / PER_LEVEL, duration: 380, useNativeDriver: false }).start();
   }, [qInLevel]);
+  
   return (
     <View style={gh.wrap}>
-      <TouchableOpacity onPress={() => { playSound("click"); onBack(); }} style={gh.back}>
-        <Text style={gh.backTxt}>←</Text>
-      </TouchableOpacity>
-      <View style={gh.center}>
+      {/* Top row: Back button, Score, Exit button */}
+      <View style={gh.topRow}>
+        <TouchableOpacity onPress={() => { playSound("click"); onBack(); }} style={gh.back}>
+          <Text style={gh.backTxt}>←</Text>
+        </TouchableOpacity>
+        
+        <View style={[gh.scorePill, { borderColor: color }]}>
+          <Text style={[gh.scoreTxt, { color }]}>⭐{score}</Text>
+        </View>
+        
+        {onExit && <ExitButton onExit={onExit} color={T.exit} />}
+      </View>
+
+      {/* Progress Bar - thoda neeche */}
+      <View style={gh.progressSection}>
         <View style={gh.barTrack}>
           <Animated.View style={[gh.barFill, { backgroundColor: color,
             width: barW.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }) }]} />
         </View>
-        <Text style={gh.levelTxt}>Level {level}/{maxLevel}  ·  Q{qInLevel + 1}/{PER_LEVEL}</Text>
-      </View>
-      <View style={[gh.scorePill, { borderColor: color }]}>
-        <Text style={[gh.scoreTxt, { color }]}>⭐{score}</Text>
+        
+        {/* Level Text - Progress bar ke neeche */}
+        <Text style={gh.levelTxt}>
+          Level {level}/{maxLevel} · Q{qInLevel + 1}/{PER_LEVEL}
+        </Text>
       </View>
     </View>
   );
 }
-const gh = StyleSheet.create({
-  wrap:     { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 6 },
-  back:     { width: 36, height: 36, borderRadius: 18, backgroundColor: "#F3F4F6", alignItems: "center", justifyContent: "center" },
-  backTxt:  { fontSize: 18, fontWeight: "900", color: T.muted },
-  center:   { flex: 1, gap: 4 },
-  barTrack: { height: 8, backgroundColor: "#E5E7EB", borderRadius: 99, overflow: "hidden" },
-  barFill:  { height: 8, borderRadius: 99 },
-  levelTxt: { fontSize: 11, color: T.muted, fontWeight: "700" },
-  scorePill:{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 2 },
-  scoreTxt: { fontSize: 15, fontWeight: "900" },
-});
 
 // ══════════════════════════════════════════════════════════════
 //  FEEDBACK PULSE
@@ -773,7 +804,7 @@ function FeedbackPulse({ correct, text }: { correct: boolean; text: string }) {
     }
   }, []);
   return (
-    <Animated.Text style={[s.feedback,
+    <Animated.Text style={[styles.feedback,
       { color: correct ? "#16A34A" : "#DC2626", transform: [{ scale: sc }, { translateX: tx }] }]}>
       {text}
     </Animated.Text>
@@ -870,7 +901,7 @@ function useGameFinish(gameId: string, color: string, onHome: () => void) {
 }
 
 // ══════════════════════════════════════════════════════════════
-//  GAME 1 — ANIMAL SOUND HERO 🎵  ✅ FIX: Centered layout
+//  GAME 1 — ANIMAL SOUND HERO 🎵  ✅ FIX: Centered layout with exit button
 // ══════════════════════════════════════════════════════════════
 function AnimalSoundGame({ onHome }: { onHome: () => void }) {
   const { finish, resultScreen, isDone } = useGameFinish("sound", T.primary, onHome);
@@ -940,20 +971,26 @@ function AnimalSoundGame({ onHome }: { onHome: () => void }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.bg }}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
-        <GameHeader score={score} total={queue.length} qInLevel={idx % PER_LEVEL}
-          level={level} maxLevel={maxLvl} color={T.primary} onBack={onHome} />
-      </View>
+      <GameHeader 
+        score={score} 
+        total={queue.length} 
+        qInLevel={idx % PER_LEVEL}
+        level={level} 
+        maxLevel={maxLvl} 
+        color={T.primary} 
+        onBack={onHome}
+        onExit={onHome}
+      />
 
       {/* FIX: flex:1 + justifyContent:"center" → options screen ke beech mein */}
       <View style={gs.centerWrap}>
         <Animated.Text style={{ fontSize: Math.min(SW * 0.26, 104),
-          textAlign: "center", transform: [{ scale: emojiSc }] }}>
+          textAlign: "center", transform: [{ scale: emojiSc }], marginBottom: 20 }}>
           {q.emoji}
         </Animated.Text>
 
-        <View style={{ alignItems: "center", gap: 6 }}>
-          <Text style={s.question}>
+        <View style={{ alignItems: "center", gap: 6, marginBottom: 20 }}>
+          <Text style={styles.question}>
             What sound does the{"\n"}
             <Text style={{ color: T.primary, fontWeight: "900" }}>{q.name}</Text> make?
           </Text>
@@ -961,15 +998,15 @@ function AnimalSoundGame({ onHome }: { onHome: () => void }) {
             text={sel === q.sound ? "🎉 Correct!" : `❌ It says "${q.sound}"`} />}
         </View>
 
-        <View style={s.grid2}>
+        <View style={styles.grid2}>
           {opts.map(opt => {
             let bg = T.card, bc = "#E5E7EB";
             if (sel === opt)         { bg = opt === q.sound ? "#BBF7D0" : "#FECACA"; bc = opt === q.sound ? "#16A34A" : "#DC2626"; }
             else if (sel && opt === q.sound) { bg = "#DCFCE7"; bc = "#16A34A"; }
             return (
               <PressBtn key={opt} disabled={!!sel} onPress={() => answer(opt)}
-                style={[s.optBtn, { backgroundColor: bg, borderColor: bc, width: (SW - 48) / 2 }]}>
-                <Text style={s.optTxt}>{opt}</Text>
+                style={[styles.optBtn, { backgroundColor: bg, borderColor: bc, width: (SW - 48) / 2 }]}>
+                <Text style={styles.optTxt}>{opt}</Text>
               </PressBtn>
             );
           })}
@@ -980,7 +1017,7 @@ function AnimalSoundGame({ onHome }: { onHome: () => void }) {
 }
 
 // ══════════════════════════════════════════════════════════════
-//  GAME 2 — COLOR BALLOON POP 🎈  ✅ FIX: Centered layout
+//  GAME 2 — COLOR BALLOON POP 🎈  ✅ FIX: Centered layout with exit button
 // ══════════════════════════════════════════════════════════════
 function ColorBalloonGame({ onHome }: { onHome: () => void }) {
   const { finish, resultScreen, isDone } = useGameFinish("color", T.teal, onHome);
@@ -1054,15 +1091,21 @@ function ColorBalloonGame({ onHome }: { onHome: () => void }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.bg }}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
-        <GameHeader score={score} total={queue.length} qInLevel={idx % PER_LEVEL}
-          level={level} maxLevel={maxLvl} color={T.teal} onBack={onHome} />
-      </View>
+      <GameHeader 
+        score={score} 
+        total={queue.length} 
+        qInLevel={idx % PER_LEVEL}
+        level={level} 
+        maxLevel={maxLvl} 
+        color={T.teal} 
+        onBack={onHome}
+        onExit={onHome}
+      />
 
       <View style={gs.centerWrap}>
         {/* Target color */}
-        <View style={{ alignItems: "center", gap: 10 }}>
-          <Text style={[s.question, { fontSize: 20 }]}>
+        <View style={{ alignItems: "center", gap: 10, marginBottom: 20 }}>
+          <Text style={[styles.question, { fontSize: 20 }]}>
             🎈 Pop the{" "}
             <Text style={{ color: target.hex, fontWeight: "900" }}>{target.name}</Text> balloon!
           </Text>
@@ -1072,7 +1115,7 @@ function ColorBalloonGame({ onHome }: { onHome: () => void }) {
         </View>
 
         {/* Balloons 2×2 */}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 28 }}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 28, marginBottom: 20 }}>
           {opts.map((c, i) => {
             const isPopped = popped === c.name;
             const isDim    = !!sel && c.name !== target.name && !isPopped;
@@ -1100,7 +1143,7 @@ function ColorBalloonGame({ onHome }: { onHome: () => void }) {
 }
 
 // ══════════════════════════════════════════════════════════════
-//  GAME 3 — MEMORY MATCH SAFARI 🧠
+//  GAME 3 — MEMORY MATCH SAFARI 🧠 with exit button
 // ══════════════════════════════════════════════════════════════
 type MemCard = { id: number; emoji: string; flipped: boolean; matched: boolean };
 function makeDeck(n: number): MemCard[] {
@@ -1217,16 +1260,28 @@ function MemoryMatchGame({ onHome }: { onHome: () => void }) {
     <View style={{ flex: 1, backgroundColor: T.bg }}>
       <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
         <View style={gh.wrap}>
-          <TouchableOpacity onPress={() => { playSound("click"); onHome(); }} style={gh.back}>
-            <Text style={gh.backTxt}>←</Text>
-          </TouchableOpacity>
-          <View style={{ flex: 1, alignItems: "center" }}>
-            <Text style={{ fontSize: 14, fontWeight: "900", color: T.purple }}>
+          <View style={gh.topRow}>
+            <TouchableOpacity onPress={() => { playSound("click"); onHome(); }} style={gh.back}>
+              <Text style={gh.backTxt}>←</Text>
+            </TouchableOpacity>
+            
+            <View style={[gh.scorePill, { borderColor: T.purple }]}>
+              <Text style={[gh.scoreTxt, { color: T.purple }]}>Moves:{moves}</Text>
+            </View>
+            
+            <ExitButton onExit={onHome} color={T.exit} />
+          </View>
+
+          <View style={gh.progressSection}>
+            <View style={gh.barTrack}>
+              <Animated.View style={[gh.barFill, { backgroundColor: T.purple,
+                width: new Animated.Value(matchCount / pairs).interpolate({ 
+                  inputRange: [0, 1], outputRange: ["0%", "100%"] 
+                }) }]} />
+            </View>
+            <Text style={gh.levelTxt}>
               {["Easy 🐾", "Medium 🌿", "Hard 🔥"][level]}  ·  {matchCount}/{pairs} matched
             </Text>
-          </View>
-          <View style={[gh.scorePill, { borderColor: T.purple }]}>
-            <Text style={[gh.scoreTxt, { color: T.purple }]}>Moves:{moves}</Text>
           </View>
         </View>
       </View>
@@ -1239,7 +1294,7 @@ function MemoryMatchGame({ onHome }: { onHome: () => void }) {
             return (
               <TouchableOpacity key={c.id} onPress={() => flip(c.id)}
                 disabled={locked || c.matched || c.flipped}>
-                <Animated.View style={[s.memCard, {
+                <Animated.View style={[styles.memCard, {
                   width: cardSz, height: cardSz,
                   backgroundColor: c.matched ? "#DCFCE7" : c.flipped ? "#F3E8FF" : "#F1F5F9",
                   borderColor: c.matched ? "#22C55E" : c.flipped ? T.purple : "#CBD5E1",
@@ -1260,7 +1315,7 @@ function MemoryMatchGame({ onHome }: { onHome: () => void }) {
 }
 
 // ══════════════════════════════════════════════════════════════
-//  GAME 4 — FEED THE ANIMAL 🍎  ✅ FIX: Centered layout
+//  GAME 4 — FEED THE ANIMAL 🍎  ✅ FIX: Centered layout with exit button
 // ══════════════════════════════════════════════════════════════
 function FeedAnimalGame({ onHome }: { onHome: () => void }) {
   const { finish, resultScreen, isDone } = useGameFinish("feed", T.green, onHome);
@@ -1340,19 +1395,25 @@ function FeedAnimalGame({ onHome }: { onHome: () => void }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: T.bg }}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
-        <GameHeader score={score} total={queue.length} qInLevel={idx % PER_LEVEL}
-          level={level} maxLevel={maxLvl} color={T.green} onBack={onHome} />
-      </View>
+      <GameHeader 
+        score={score} 
+        total={queue.length} 
+        qInLevel={idx % PER_LEVEL}
+        level={level} 
+        maxLevel={maxLvl} 
+        color={T.green} 
+        onBack={onHome}
+        onExit={onHome}
+      />
 
       <View style={gs.centerWrap}>
-        <Text style={s.question}>
+        <Text style={styles.question}>
           What does the{"\n"}
           <Text style={{ color: T.green, fontWeight: "900" }}>{q.name}</Text> eat?
         </Text>
 
         {/* Animal + flying food */}
-        <View style={{ alignItems: "center", justifyContent: "center", height: 120 }}>
+        <View style={{ alignItems: "center", justifyContent: "center", height: 120, marginVertical: 20 }}>
           <Animated.Text style={{ fontSize: Math.min(SW * 0.22, 90), transform: [{ scale: anSc }] }}>
             {q.animal}
           </Animated.Text>
@@ -1369,14 +1430,14 @@ function FeedAnimalGame({ onHome }: { onHome: () => void }) {
             text={sel === q.food ? `🎉 Yes! ${q.label}!` : `❌ It's ${q.label} ${q.food}`} />
         )}
 
-        <View style={s.grid2}>
+        <View style={styles.grid2}>
           {opts.map(opt => {
             let bg = T.card, bc = "#E5E7EB";
             if (sel === opt)         { bg = opt === q.food ? "#BBF7D0" : "#FECACA"; bc = opt === q.food ? "#16A34A" : "#DC2626"; }
             else if (sel && opt === q.food) { bg = "#DCFCE7"; bc = "#16A34A"; }
             return (
               <PressBtn key={opt} disabled={!!sel} onPress={() => answer(opt)}
-                style={[s.optBtn, { backgroundColor: bg, borderColor: bc, width: (SW - 48) / 2 }]}>
+                style={[styles.optBtn, { backgroundColor: bg, borderColor: bc, width: (SW - 48) / 2 }]}>
                 <Text style={{ fontSize: 40 }}>{opt}</Text>
               </PressBtn>
             );
@@ -1652,7 +1713,7 @@ const gs = StyleSheet.create({
   },
 });
 
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   question: { fontSize: 20, fontWeight: "800", color: T.text, textAlign: "center", lineHeight: 28 },
   feedback: { fontSize: 20, fontWeight: "900", textAlign: "center", marginTop: 4 },
   grid2:    { flexDirection: "row", flexWrap: "wrap", gap: 12, justifyContent: "center" },
@@ -1665,4 +1726,92 @@ const s = StyleSheet.create({
   bigBtnTxt:{ color: "#fff", fontSize: 18, fontWeight: "900" },
   memCard:  { borderRadius: 14, borderWidth: 3, alignItems: "center", justifyContent: "center",
               shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  exitButtonContainer: {
+    marginLeft: 8,
+  },
+  exitButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: T.exit,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  exitButtonText: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "900",
+    lineHeight: 24,
+  },
+});
+
+// Updated styles for GameHeader
+const gh = StyleSheet.create({
+  wrap: { 
+    paddingHorizontal: 16, 
+    paddingTop: Platform.OS === 'ios' ? 8 : 12,
+    paddingBottom: 8,
+    backgroundColor: 'transparent',
+  },
+  topRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginTop: 60,     // 👈 YEH LINE ADD KARO
+  marginBottom: 30,
+},
+  back: { 
+    width: 40, 
+    height: 40, 
+    borderRadius: 20, 
+    backgroundColor: "#F3F4F6", 
+    alignItems: "center", 
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  backTxt: { 
+    fontSize: 20, 
+    fontWeight: "900", 
+    color: T.muted 
+  },
+  progressSection: {
+    width: '100%',
+    gap: 6,  // 👈 Bar aur text ke beech gap
+  },
+  barTrack: { 
+    height: 10, 
+    backgroundColor: "#E5E7EB", 
+    borderRadius: 99, 
+    overflow: "hidden",
+    width: '100%',
+  },
+  barFill: { 
+    height: 10, 
+    borderRadius: 99 
+  },
+  levelTxt: { 
+    fontSize: 13,  // 👈 Thoda bada font
+    color: T.muted, 
+    fontWeight: "700",
+    textAlign: 'center',  // 👈 Center align kiya
+    letterSpacing: 0.3,
+  },
+  scorePill: {
+    paddingHorizontal: 14, 
+    paddingVertical: 6, 
+    borderRadius: 20, 
+    borderWidth: 2,
+    backgroundColor: '#fff',
+  },
+  scoreTxt: { 
+    fontSize: 16, 
+    fontWeight: "900" 
+  },
 });
